@@ -62,14 +62,26 @@ def rand_string_generator(size=5, chars=string.ascii_lowercase + string.digits):
      return ''.join(random.choice(chars) for _ in range(size))
 
 def get_exchange_rates(base_currency="USD"):
-    response = requests.get(
-        f"https://open.er-api.com/v6/latest/{base_currency}"
-    )
+    try:
+        response = requests.get(
+            f"https://open.er-api.com/v6/latest/{base_currency}",
+            timeout=5
+        )
 
-    data = response.json()
+        response.raise_for_status()  # Raises an exception for 4xx or 5xx responses
 
-    return data["rates"]
+        data = response.json()
 
+        return data.get("rates", {})
+
+    except requests.exceptions.RequestException as e:
+        print(f"Exchange rate request failed: {e}")
+        return {}
+
+    except ValueError:
+        print("Invalid JSON response received.")
+        return {}
+    
 def get_total_balance_usd(user):
     rates = get_exchange_rates()
 
@@ -82,7 +94,7 @@ def get_total_balance_usd(user):
             if account.currencyName == "USD":
                 total += account.balance
             else:
-                rate = Decimal(str(rates[account.currency]))
+                rate = Decimal(str(rates[account.currencyName]))
                 total += account.balance / rate
 
     else:
