@@ -10,5 +10,6 @@ urlpatterns = [
     path('card/', views.CardView.as_view(), name="card views"),
     path('card/transactions/', views.CardTransactionView.as_view(), name="card transaction views"),
     path('account/verify/', views.VerificationView.as_view(), name="user veirification"),
-    path('support/', views.SupportView.as_view(), name="companny support")
+    path('support/', views.SupportView.as_view(), name="companny support"),
+    path('signup/', views.SignupViews.as_view(), name="create new user")
 ]

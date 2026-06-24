@@ -6,11 +6,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import status
 import json
-from .serializers import LoginSerializer, UserInfoSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer
+from .serializers import LoginSerializer, UserInfoSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer, RegisterSerializer
 from . import models
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
 from datetime import date
+from decimal import Decimal
 
 
 
@@ -41,6 +42,33 @@ class LoginViews(APIView):
             {"success": "Login successful", **data},
             status=status.HTTP_200_OK
         ) 
+    
+class SignupViews(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        try:
+            serializer = RegisterSerializer(
+                data=request.data
+            )
+
+            serializer.is_valid(raise_exception=True)
+
+            user = AuthService.create_user(serializer.validated_data)
+
+            return Response (
+                {
+                "success": "Account created successfully",
+                "user_id": user.id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            return Response({
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserInfo(APIView):
     permission_classes = [IsAuthenticated]
@@ -127,6 +155,9 @@ class Transaction(APIView):
             amount = serializer.validated_data["amount"]
             code = serializer.validated_data["code"]
             pin = serializer.validated_data["pin"]
+            fee = Decimal("0.20")
+
+            new_amount = Decimal(amount) - fee
 
             pin = AuthService.verify_pin(request.user, pin)
 
@@ -149,24 +180,47 @@ class Transaction(APIView):
                 pass
 
             #check if lead account
-            recipient_isLead = account.objects.filter(
+            recipient_isLead = models.Account.objects.filter(
                 accountNumber__iexact=serializer.validated_data["account_number"]
-                ).first()
+            ).first()
+            
+            pass
             if not recipient_isLead:
                 accountNumber = serializer.validated_data["account_number"]
                 bankname = serializer.validated_data["bank_name"]
                 destination = f"sent to {first_name} {last_name} | {accountNumber} | {bankname} "
-                AccountSevice.create_account_transaction(request.user, amount, "withdraw", destination, "pending")
-
-            else:
-                #create transaction date
-
-            return Response({
-                "status": "success",
+                AccountSevice.account_debit(account, amount)
+                AccountSevice.create_account_transaction(request.user, new_amount, "withdraw", destination, "pending")
+                return Response({
+                "status": "pending",
                 "amount": f"{code}{amount}",
                 "recipient": f"{first_name} {last_name}",
                 "date": date.today(),
-            }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_200_OK)
+            
+            else:
+                if recipient_isLead.currencyName != account.currencyName:
+                    return Response({
+                    "status": "failed",
+                    "amount": f"{code}{amount}",
+                    "recipient": f"{first_name} {last_name}",
+                    "date": date.today(),
+                    }, status=status.HTTP_200_OK)
+                
+                accountNumber = serializer.validated_data["account_number"]
+                bankname = serializer.validated_data["bank_name"]
+                destination = f"Sent to {first_name} {last_name} | {accountNumber} | {bankname} "
+                destination2 = f"From {request.user.first_name} {request.user.last_name}"
+                AccountSevice.account_debit(account, amount)
+                AccountSevice.create_account_transaction(request.user, new_amount, "withdraw", destination, "success")
+                AccountSevice.account_top_up(recipient_isLead, amount)
+                AccountSevice.create_account_transaction(recipient_isLead.user, new_amount, "Deposit", destination2, "success")
+                return Response({
+                    "status": "success",
+                    "amount": f"{code}{amount}",
+                    "recipient": f"{first_name} {last_name}",
+                    "date": date.today(),
+                }, status=status.HTTP_200_OK)
         
         except Exception as e:
             print("ERROR:", str(e))

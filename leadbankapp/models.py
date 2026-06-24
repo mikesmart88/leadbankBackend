@@ -63,7 +63,7 @@ class User(AbstractUser):
     email= models.EmailField(verbose_name="user email", unique=True)
     middleName = models.CharField(unique=True, max_length=100, null=True, blank=True)
     token= models.CharField(max_length=100, unique=True, null=True, blank=True)
-    avatar= models.FileField(verbose_name='useravatar', unique=True, blank=True, null=True, upload_to="avatars/")
+    avatar= models.FileField(verbose_name='useravatar', blank=True, null=True, upload_to="avatars/")
     avatarUrl= models.URLField(unique=True, null=True, blank=True)
     phoneNumber= models.BigIntegerField(unique=True, blank=True, null=True)
     country = models.CharField(null=True, blank=True, max_length=200)
@@ -71,7 +71,7 @@ class User(AbstractUser):
     refCode = models.CharField(max_length=30, null=True, blank=True, unique=True)
     gender = models.CharField(max_length=100, blank=True, null=True)
     status = models.BooleanField(default=True)
-    transactionPin = models.IntegerField(blank=True, null=True)
+    transactionPin = models.CharField(blank=True, null=True)
 
     #verified info 
     address1= models.TextField(null=True, blank=True)
@@ -151,7 +151,7 @@ class AccountTransaction(models.Model):
 
     transactionTypeChioce = [
         ("withdraw", "Withdraw"),
-        ("deposite", "Deposite"),
+        ("deposit", "Deposit"),
         ("bills", "Bills"),
     ]
 
@@ -191,12 +191,12 @@ class Card(models.Model):
     billingAddress = models.TextField(
         null=True,
         blank=True,
-        default="65 Charlotte Road, Hackney, London EC2A 3PE, United Kingdom"
+        default="651 N Broad Street, Suite 206, Middletown, DE 19700, United States"
     )
     zipcode = models.CharField(
         null=True,
         blank=True,
-        default="EC2A 3PE",
+        default="19700",
         max_length=100
     )
     balance = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)

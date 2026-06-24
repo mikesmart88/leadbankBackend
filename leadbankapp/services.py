@@ -3,7 +3,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . import models
 from .utils import get_total_balance_usd
 from .serializers import AccountSerializer, SupportSerializer, PaymentWaysSerializer
-from django.db import transaction
+from django.db import transaction, IntegrityError
+from decimal import Decimal
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
 
 User = get_user_model()
 
@@ -11,23 +14,34 @@ class AuthService:
 
     @staticmethod
     def login(request, email, password):
-        
-        check_user = User.objects.filter(email__iexact=email).first()
 
-        if not check_user: 
+        print("EMAIL:", email)
+
+        check_user = User.objects.filter(email__iexact=email).first()
+        print("CHECK USER:", check_user)
+
+        if not check_user:
             raise ValueError("User does not exits")
-        
-        user = authenticate(request, email=email, password=password)
+
+        print("PASSWORD VALID:", check_user.check_password(password))
+
+        user = authenticate(
+            request,
+            username=email,
+            password=password
+        )
+
+        print("AUTH USER:", user)
 
         if not user:
             raise ValueError("Inavalid Credentials")
-        
+
         if not user.status:
             raise ValueError("User does not exit")
-        
+
         if not user.is_active:
             raise ValueError("Account Disabled")
-        
+
         refresh = RefreshToken.for_user(user)
 
         return {
@@ -43,11 +57,33 @@ class AuthService:
         return authenticate(email=user.email, password=password)
     
     def verify_pin(user, pin):
-        Pin = models.User.objects.filter(user=user, transactionPin__iexact=pin).first()
+        Pin = models.User.objects.filter(email=user.email, transactionPin__iexact=pin).first()
         if Pin:
             return True
         
         raise ValueError("Invalid transaction pin")
+    
+    def create_user(validated_data):
+
+        user = models.User.objects.create_user(
+            email=validated_data["email"],
+            username=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+        )
+
+        user.middleName = validated_data.get("middleName", "")
+        user.gender = validated_data["gender"]
+        user.phoneNumber = validated_data["phoneNumber"]
+        user.country = validated_data["country"]
+        user.transactionPin = validated_data["transactionPin"]
+
+        user.save()
+
+        # send welcome email here
+
+        return user
     
 
 class AccountSevice:
@@ -80,27 +116,48 @@ class AccountSevice:
 
         return account
     
+    def account_debit(account, amount):
+        account.balance -= Decimal(str(amount))
+        account.save()
+
+        return account
+    
+    def account_top_up(account, amount):
+        amount = Decimal(str(amount))
+        fee = Decimal("0.20")
+
+        account.balance = account.balance + amount - fee
+        account.save()
+
+        return account
 
     def create_account(user, data):
 
-    # 🔥 check if account already exists
-        exists = models.Account.objects.filter(
-            user=user,
-            currencycode=data["currencycode"]
-        ).exists()
+        if user.isVerifiedCompleted != 5:
+            raise ValueError("You need to verify your personals to create account")
 
-        if exists:
+        currency_code = data.get("currencycode")
+        country = data.get("country")
+        currency_name = data.get("currencyName")
+
+        if not currency_code:
+            raise ValueError("currencycode is required")
+
+        if models.Account.objects.filter(user=user, currencycode=currency_code).exists():
             raise ValueError("You already have an account with this currency")
 
-        # create account
-        account = models.Account.objects.create(
-            user=user,
-            country=data["country"],
-            currencyName=data["currencyName"],
-            currencycode=data["currencycode"],
-        )
+        try:
+            with transaction.atomic():
+                account = models.Account.objects.create(
+                    user=user,
+                    country=country,
+                    currencyName=currency_name,
+                    currencycode=currency_code,
+                )
+                return account
 
-        return account
+        except IntegrityError:
+            raise ValueError("Account already exists")
 
 
     def create_account_transaction(user, amount, type, destination, status ):
@@ -173,3 +230,4 @@ class SupportService:
                 many=True
             ).data
         }
+    

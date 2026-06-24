@@ -79,3 +79,24 @@ class FundsSerializer(serializers.Serializer):
     amount = serializers.CharField()
     code = serializers.CharField()
     pin = serializers.CharField(write_only=True, max_length=4)
+
+
+class RegisterSerializer(serializers.Serializer):
+    country = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    middle_name = serializers.CharField(required=False, allow_blank=True)
+    gender = serializers.CharField()
+    phoneNumber = serializers.CharField()
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length=8)
+    transactionPin = serializers.CharField(min_length=4, max_length=4)
+    refCode = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_email(self, value):
+        from .models import User
+
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists")
+
+        return value
