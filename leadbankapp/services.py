@@ -160,8 +160,7 @@ class AccountSevice:
             raise ValueError("Account already exists")
 
 
-    def create_account_transaction(user, amount, type, destination, status ):
-        account = models.Account.objects.filter(user=user).first()
+    def create_account_transaction(account, amount, type, destination, status ):
         if account:
             new_transaction = models.AccountTransaction.objects.create(
                 account=account,
@@ -174,14 +173,13 @@ class AccountSevice:
 
             new_transaction.save()
 
-    
-
 class CardService:
     @staticmethod
     @transaction.atomic
     def get_card_data(user):
         return models.Card.objects.filter(user=user).first()
     
+    @staticmethod
     def get_card_transaction(user):
 
         card = models.Card.objects.filter(user=user).first()
@@ -190,6 +188,21 @@ class CardService:
             transaction = models.CardTransaction.objects.filter(card=card).all()
             return transaction.order_by('-created_at')
         
+    @staticmethod
+    def create_card_transaction(user, amount, type, destination, status ):
+        card = models.Card.objects.filter(user=user).first()
+        if card:
+            new_transaction = models.CardTransaction.objects.create(
+                card=card,
+                currencySign="$",
+                amount=amount,
+                type=type,
+                destination=destination,
+                status=status
+            )
+
+            new_transaction.save()
+    @staticmethod
     def create_card(user):
         account = AccountSevice.get_account_by_country(user, "United States")
         if account is None:
@@ -200,6 +213,8 @@ class CardService:
         
         new_card, created = models.Card.objects.get_or_create(user=user)
 
+        us_account = models.Account.objects.filter(user=user, country="United States").first()
+
         if not created:
             raise ValueError("Card already exits")
         
@@ -207,27 +222,34 @@ class CardService:
         account.balance -= 3
         account.save()
         new_card.save()
-
+        CardService.create_card_transaction(user, 1, "deposit", "Card creation Funding", "success")
+        AccountSevice.create_account_transaction(account, 3, "withdraw", "Card service fee", "success")
         return new_card
     
 class SupportService:
     @staticmethod
     def get_company_data():
+        print("Service called")
+
         company = models.Company.objects.first()
+        print("Company:", company)
 
         if not company:
+            print("No company found")
             return {
                 "support": None,
                 "paymentWays": []
             }
 
-        payments = models.Paymentway.objects.filter(company=company).all()
+        serializer = SupportSerializer(company)
+        print("Serialized:", serializer.data)
+
+        payments = models.Paymentway.objects.filter(company=company)
 
         return {
-            "support": SupportSerializer(company).data,
+            "support": serializer.data,
             "paymentWays": PaymentWaysSerializer(
                 payments,
                 many=True
             ).data
         }
-    

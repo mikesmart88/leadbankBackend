@@ -61,7 +61,7 @@ class User(AbstractUser):
     ]
 
     email= models.EmailField(verbose_name="user email", unique=True)
-    middleName = models.CharField(unique=True, max_length=100, null=True, blank=True)
+    middleName = models.CharField(max_length=100, null=True, blank=True)
     token= models.CharField(max_length=100, unique=True, null=True, blank=True)
     avatar= models.FileField(verbose_name='useravatar', blank=True, null=True, upload_to="avatars/")
     avatarUrl= models.URLField(unique=True, null=True, blank=True)
@@ -83,8 +83,8 @@ class User(AbstractUser):
     documentType= models.CharField(null=True, blank=True, max_length=100)
     ProofOfAddressDoc = models.FileField(null=True, blank=True, upload_to="users/proof_of_address/")
     isVerifiedCompleted= models.IntegerField(default=0)
-    nidImagefront = models.FileField(null=True, blank=True, unique=True, upload_to="users/NidImages/front/")
-    nidImageback = models.FileField(null=True, blank=True, unique=True, upload_to="users/NidImages/back/")
+    nidImagefront = models.FileField(null=True, blank=True, upload_to="users/NidImages/front/")
+    nidImageback = models.FileField(null=True, blank=True, upload_to="users/NidImages/back/")
     otp = models.IntegerField(null=True, blank=True, unique=True)
     dateOfBirth = models.DateField(null=True, blank=True)
     is_saved = models.BooleanField(default=False)
@@ -223,7 +223,7 @@ class CardTransaction(models.Model):
 
     transactionTypeChioce = [
         ("withdraw", "Withdraw"),
-        ("deposite", "Deposite"),
+        ("deposit", "Deposit"),
         ("bills", "Bills"),
     ]
 
@@ -242,7 +242,7 @@ class CardTransaction(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.account.user.first_name} transaction to {self.destination} -- {self.status}"
+        return f"{self.card.user.first_name} card transaction to {self.destination} -- {self.status}"
     
     class Meta:
         ordering = ["-created_at"]

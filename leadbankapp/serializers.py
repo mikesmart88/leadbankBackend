@@ -36,7 +36,7 @@ class CardSerializer(serializers.ModelSerializer):
 
 class CardTransactionSerializer(serializers.ModelSerializer):
     class Meta:
-        model: CardTransaction
+        model = CardTransaction
         fields = "__all__"
 
 class VerificationSerializer(serializers.ModelSerializer):
@@ -97,6 +97,14 @@ class RegisterSerializer(serializers.Serializer):
         from .models import User
 
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists")
+            raise ValueError("Email already exists")
+
+        return value
+
+    def validate_phoneNumber(self, value):
+        from .models import User
+
+        if User.objects.filter(phoneNumber=value).exists():
+            raise ValueError("Phone number already exists")
 
         return value
