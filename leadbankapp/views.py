@@ -220,7 +220,7 @@ class UserAccountView(APIView):
             )
 
             return Response({
-                "success": "Reached backend successfully"
+                "success": "Bank Account created successfully"
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

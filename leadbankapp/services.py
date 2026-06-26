@@ -165,6 +165,7 @@ class AccountSevice:
             new_transaction = models.AccountTransaction.objects.create(
                 account=account,
                 currencySign=account.currencycode,
+                currency=account.currencyName,
                 amount=amount,
                 type=type,
                 destination=destination,

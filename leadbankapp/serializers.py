@@ -85,7 +85,7 @@ class RegisterSerializer(serializers.Serializer):
     country = serializers.CharField()
     first_name = serializers.CharField()
     last_name = serializers.CharField()
-    middle_name = serializers.CharField(required=False, allow_blank=True)
+    middleName = serializers.CharField(required=False, allow_blank=True)
     gender = serializers.CharField()
     phoneNumber = serializers.CharField()
     email = serializers.EmailField()

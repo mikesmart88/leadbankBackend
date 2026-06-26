@@ -163,6 +163,7 @@ class AccountTransaction(models.Model):
 
     account = models.ForeignKey(Account, null=False, blank=False, on_delete=models.CASCADE)
     currencySign= models.CharField(max_length=50, null=True, blank=True)
+    currency = models.CharField(max_length=10, null=True, blank=True)
     amount= models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     type= models.CharField(max_length=50, null=True, blank=True, choices=transactionTypeChioce)
     destination= models.TextField(null=True, blank=True)
