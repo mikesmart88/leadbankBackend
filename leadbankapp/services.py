@@ -174,6 +174,21 @@ class AccountSevice:
 
             new_transaction.save()
 
+    
+    @staticmethod
+    def reverse_transaction(transaction):
+        if transaction.status != "pending" :
+            pass
+
+        if transaction.status != "reversed":
+            pass
+
+        account = transaction.account
+        AccountSevice.account_top_up(account, transaction.amount)
+
+        account.status = "reversed"
+        account.save()
+
 class CardService:
     @staticmethod
     @transaction.atomic
