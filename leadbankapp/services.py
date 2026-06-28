@@ -7,6 +7,7 @@ from django.db import transaction, IntegrityError
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -186,8 +187,9 @@ class AccountSevice:
         account = transaction.account
         AccountSevice.account_top_up(account, transaction.amount)
 
-        account.status = "reversed"
-        account.save()
+        transaction.status = "reversed"
+        transaction.created_at = timezone.now()
+        transaction.save()
 
 class CardService:
     @staticmethod
