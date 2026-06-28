@@ -159,6 +159,7 @@ class AccountTransaction(models.Model):
         ("success", "Success"),
         ("pending", "Pending"),
         ("failed", "Failed"),
+        ("reversed", "reversed"),
     ]
 
     account = models.ForeignKey(Account, null=False, blank=False, on_delete=models.CASCADE)
