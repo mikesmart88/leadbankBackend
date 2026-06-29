@@ -182,9 +182,6 @@ class AccountSevice:
         if transaction.status != "pending" :
             return
 
-        if transaction.status != "reversed":
-            return
-
         account = transaction.account
         AccountSevice.account_top_up(account, transaction.amount)
         AccountSevice.send_transaction_email(account.user, transaction)
