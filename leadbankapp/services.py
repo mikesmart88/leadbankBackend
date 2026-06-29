@@ -160,41 +160,8 @@ class AccountSevice:
 
         except IntegrityError:
             raise ValueError("Account already exists")
-
-
-    def create_account_transaction(account, amount, type, destination, status ):
-        if account:
-            new_transaction = models.AccountTransaction.objects.create(
-                account=account,
-                currencySign=account.currencycode,
-                currency=account.currencyName,
-                amount=amount,
-                type=type,
-                destination=destination,
-                status=status
-            )
-
-            new_transaction.save()
-
-    
+        
     @staticmethod
-    def reverse_transaction(transaction):
-        if transaction.status != "pending" :
-            return
-
-        account = transaction.account
-        AccountSevice.account_top_up(account, transaction.amount)
-        AccountSevice.send_transaction_email(account.user, transaction)
-
-        transaction.status = "reversed"
-        transaction.save()
-
-        transaction.refresh_from_db()
-
-        print("Status after refresh:", transaction.status)
-
-        AccountSevice.send_transaction_email(account.user, transaction, "Your funds have been reversed successfully", "Funds reversed succesfully")
-
     def send_transaction_email(user, transaction, email_head, mail_subj):
         send_mail(
         user.email, 
@@ -322,6 +289,41 @@ class AccountSevice:
 mail_subj,
 f"{user.first_name} {user.last_name}"
         )
+
+
+
+    def create_account_transaction(account, amount, type, destination, status ):
+        if account:
+            new_transaction = models.AccountTransaction.objects.create(
+                account=account,
+                currencySign=account.currencycode,
+                currency=account.currencyName,
+                amount=amount,
+                type=type,
+                destination=destination,
+                status=status
+            )
+
+            new_transaction.save()
+
+    
+    @staticmethod
+    def reverse_transaction(transaction):
+        if transaction.status != "pending" :
+            return
+
+        account = transaction.account
+        AccountSevice.account_top_up(account, transaction.amount)
+        AccountSevice.send_transaction_email(account.user, transaction)
+
+        transaction.status = "reversed"
+        transaction.save()
+
+        transaction.refresh_from_db()
+
+        print("Status after refresh:", transaction.status)
+
+        AccountSevice.send_transaction_email(account.user, transaction, "Your funds have been reversed successfully", "Funds reversed succesfully")
 
 class CardService:
     @staticmethod
