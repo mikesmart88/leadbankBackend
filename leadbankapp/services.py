@@ -193,9 +193,9 @@ class AccountSevice:
         transaction.created_at = timezone.now()
         transaction.save()
 
-        AccountSevice.send_transaction_email(account.user, transaction)
+        AccountSevice.send_transaction_email(account.user, transaction, "Your funds have been reversed successfully", "Funds reversed succesfully")
 
-    def send_transaction_email(user, transaction):
+    def send_transaction_email(user, transaction, email_head, mail_subj):
         send_mail(
         user.email, 
         f"""
@@ -273,7 +273,7 @@ class AccountSevice:
 
     <div style="padding: 20px; color:#333333; letter-spacing:-0.5px; line-height:150%;">
         <small style="margin:0 0 25px 0;font-size:14px;line-height:32px;color:#4B5563;">Hello {user.first_name}</small>
-        <h3>Your wallet has been funded successfully! 🤑</h3>
+        <h3>{email_head}</h3>
         <p style="margin:0 0 25px 0;font-size:14px;line-height:32px;color:#4B5563;">
   Your details are shown below:
 <br>
@@ -318,7 +318,9 @@ class AccountSevice:
     ©2026. Grey. All rights reserved.
   </p>
 </section>
-"""
+""",
+mail_subj,
+f"{user.first_name} {user.last_name}"
         )
 
 class CardService:

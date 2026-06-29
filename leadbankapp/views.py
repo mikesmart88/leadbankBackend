@@ -291,7 +291,7 @@ class Transaction(APIView):
                 AccountSevice.account_debit(account, amount)
                 transaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "pending")
                 if transaction:
-                    AccountSevice.send_transaction_email(account.user, transaction)
+                    AccountSevice.send_transaction_email(account.user, transaction, "Funds sent it pending!", "Transaction Pending")
                 pass
 
                 return Response({
@@ -308,7 +308,7 @@ class Transaction(APIView):
                     destination = f"send to {first_name} {last_name} | {accountNumber} | {bankname} "
                     ftransaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "failed" )
                     if ftransaction:
-                        AccountSevice.send_transaction_email(account.user, ftransaction)
+                        AccountSevice.send_transaction_email(account.user, ftransaction, "Wallet transaction failed", "Transaction Failed")
                     pass
 
                     return Response({
@@ -327,12 +327,12 @@ class Transaction(APIView):
                 AccountSevice.account_debit(account, amount)
                 me_transaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "success")
                 if me_transaction:
-                    AccountSevice.send_transaction_email(account.user, me_transaction)
+                    AccountSevice.send_transaction_email(account.user, me_transaction, "Your funds have been sent successfully!!", "Funds Sent" )
                 pass
                 AccountSevice.account_top_up(recipient_isLead, amount)
                 rtransaction = AccountSevice.create_account_transaction(recipient_isLead, new_amount, "Deposit", destination2, "success")
                 if rtransaction:
-                    AccountSevice.send_transaction_email(recipient_isLead.user, rtransaction)
+                    AccountSevice.send_transaction_email(recipient_isLead.user, rtransaction, "Your wallet have been funded successfully", "Wallet funded successfully")
                 pass
                 return Response({
                     "status": "success",
