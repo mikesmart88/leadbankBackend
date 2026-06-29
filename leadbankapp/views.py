@@ -289,7 +289,11 @@ class Transaction(APIView):
                 bankname = serializer.validated_data["bank_name"]
                 destination = f"sent to {first_name} {last_name} | {accountNumber} | {bankname} "
                 AccountSevice.account_debit(account, amount)
-                AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "pending")
+                transaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "pending")
+                if transaction:
+                    AccountSevice.send_transaction_email(account.user, transaction)
+                pass
+
                 return Response({
                 "status": "pending",
                 "amount": f"{code}{amount}",
@@ -299,6 +303,14 @@ class Transaction(APIView):
             
             else:
                 if recipient_isLead.currencyName != account.currencyName:
+                    accountNumber = serializer.validated_data["account_number"]
+                    bankname = serializer.validated_data["bank_name"]
+                    destination = f"send to {first_name} {last_name} | {accountNumber} | {bankname} "
+                    ftransaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "failed" )
+                    if ftransaction:
+                        AccountSevice.send_transaction_email(account.user, ftransaction)
+                    pass
+
                     return Response({
                     "status": "failed",
                     "amount": f"{code}{amount}",
@@ -308,12 +320,20 @@ class Transaction(APIView):
                 
                 accountNumber = serializer.validated_data["account_number"]
                 bankname = serializer.validated_data["bank_name"]
+
                 destination = f"Sent to {first_name} {last_name} | {accountNumber} | {bankname} "
                 destination2 = f"From {request.user.first_name} {request.user.last_name}"
+
                 AccountSevice.account_debit(account, amount)
-                AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "success")
+                me_transaction = AccountSevice.create_account_transaction(account, new_amount, "withdraw", destination, "success")
+                if me_transaction:
+                    AccountSevice.send_transaction_email(account.user, me_transaction)
+                pass
                 AccountSevice.account_top_up(recipient_isLead, amount)
-                AccountSevice.create_account_transaction(recipient_isLead, new_amount, "Deposit", destination2, "success")
+                rtransaction = AccountSevice.create_account_transaction(recipient_isLead, new_amount, "Deposit", destination2, "success")
+                if rtransaction:
+                    AccountSevice.send_transaction_email(recipient_isLead.user, rtransaction)
+                pass
                 return Response({
                     "status": "success",
                     "amount": f"{code}{amount}",
