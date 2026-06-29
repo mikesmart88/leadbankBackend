@@ -180,17 +180,16 @@ class AccountSevice:
     @staticmethod
     def reverse_transaction(transaction):
         if transaction.status != "pending" :
-            pass
+            return
 
         if transaction.status != "reversed":
-            pass
+            return
 
         account = transaction.account
         AccountSevice.account_top_up(account, transaction.amount)
         AccountSevice.send_transaction_email(account.user, transaction)
 
         transaction.status = "reversed"
-        transaction.created_at = timezone.now()
         transaction.save()
 
         AccountSevice.send_transaction_email(account.user, transaction, "Your funds have been reversed successfully", "Funds reversed succesfully")
