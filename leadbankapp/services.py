@@ -189,6 +189,10 @@ class AccountSevice:
         transaction.status = "reversed"
         transaction.save()
 
+        transaction.refresh_from_db()
+
+        print("Status after refresh:", transaction.status)
+
         AccountSevice.send_transaction_email(account.user, transaction, "Your funds have been reversed successfully", "Funds reversed succesfully")
 
     def send_transaction_email(user, transaction, email_head, mail_subj):
