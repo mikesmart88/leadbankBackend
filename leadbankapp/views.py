@@ -1,12 +1,12 @@
 from django.shortcuts import render
-from .services import AuthService, AccountSevice, CardService, SupportService
+from .services import AuthService, AccountSevice, CardService, SupportService, UserServices
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import status
 import json
-from .serializers import LoginSerializer, UserInfoSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer, RegisterSerializer
+from .serializers import LoginSerializer, UserInfoSerializer, UserUpdateSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer, RegisterSerializer
 from . import models
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
@@ -461,4 +461,39 @@ class SupportView(APIView):
                 {"message": str(e)},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+
+class UpdateUserViews(APIView):
+    permission_classes = [AllowAny]
+
+    def put(self, request):
+        try:
+            serializer = UserUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            UserServices.Update_avatar(request.user, serializer.validated_data)
+
+            return Response(
+                {"success": "Avatar updated successfully"},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        
+
+class WithdrawView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        limits = UserServices.get_account_limit(request.user)
+
+        print(limits)
+
+        return Response(limits)
+
+            
         

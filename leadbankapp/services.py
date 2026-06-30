@@ -2,13 +2,16 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from . import models
 from .utils import get_total_balance_usd
-from .serializers import AccountSerializer, SupportSerializer, PaymentWaysSerializer
+from .serializers import AccountSerializer, SupportSerializer, PaymentWaysSerializer, UserUpdateSerializer
 from django.db import transaction, IntegrityError
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from django.utils import timezone
 from .mailservice import send_mail
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+from .utils import get_exchange_rates
 
 User = get_user_model()
 
@@ -404,4 +407,75 @@ class SupportService:
                 payments,
                 many=True
             ).data
+        }
+
+
+class UserServices:
+
+    @staticmethod
+    def Update_avatar(user, validated_data):
+        img = validated_data.get("avatar")
+        user.avatar = img
+        user.save()
+
+        return user
+
+    
+    def get_account_limit(user):
+        today = timezone.localdate()
+
+        rates = get_exchange_rates("USD")
+
+        accounts = models.Account.objects.filter(user=user)
+        cards = models.Card.objects.filter(user=user)
+
+        total_deposit = Decimal("0")
+        total_withdraw = Decimal("0")
+
+        for account in accounts:
+
+            print(account)
+
+            deposits = (
+                account.accounttransaction_set.filter(
+                    type="deposit",
+                    status="success",
+                    created_at__date=today,
+                ).aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
+            withdrawals = (
+                account.accounttransaction_set.filter(
+                    type="withdraw",
+                    status="success",
+                    created_at__date=today,
+                ).aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
+            currency = account.currencyName
+
+            if currency == "USD":
+                rate = Decimal("1")
+            else:
+                rate = Decimal(str(rates.get(currency, 1)))
+
+            total_deposit += Decimal(deposits) / rate
+            total_withdraw += Decimal(withdrawals) / rate
+
+        card_total = (
+            models.CardTransaction.objects.filter(
+                card__in=cards,
+                status="success",
+                created_at__date=today,
+            ).aggregate(total=Sum("amount"))["total"]
+            or Decimal("0.00")
+        )
+
+
+        return {
+            "deposits": total_deposit,
+            "withdrawals": total_withdraw,
+            "cards": card_total
         }

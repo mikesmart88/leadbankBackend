@@ -10,6 +10,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
 
+
+class UserUpdateSerializer(serializers.Serializer):
+    avatar = serializers.FileField()
+
+
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account

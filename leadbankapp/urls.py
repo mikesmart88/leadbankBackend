@@ -11,5 +11,7 @@ urlpatterns = [
     path('card/transactions/', views.CardTransactionView.as_view(), name="card transaction views"),
     path('account/verify/', views.VerificationView.as_view(), name="user veirification"),
     path('support/', views.SupportView.as_view(), name="companny support"),
-    path('signup/', views.SignupViews.as_view(), name="create new user")
+    path('signup/', views.SignupViews.as_view(), name="create new user"),
+    path('user/', views.UpdateUserViews.as_view(), name="update user view"),
+    path('account/limits', views.WithdrawView.as_view(), name="account transaction limits"),
 ]
