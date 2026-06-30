@@ -479,3 +479,29 @@ class UserServices:
             "withdrawals": total_withdraw,
             "cards": card_total
         }
+    
+    @staticmethod
+    def change_password(user, validated_data):
+        old_password = validated_data["old_password"]
+        new_password = validated_data["new_password"]
+
+        if not AuthService.verify_password(user, old_password):
+            raise ValueError("Old password is incorrect.")
+
+        user.set_password(new_password)
+        user.save()
+
+        return user
+    
+    @staticmethod
+    def change_pin(user, validated_data):
+        old_pin = validated_data["old_pin"]
+        new_pin = validated_data["new_pin"]
+
+        if not AuthService.verify_pin(user, old_pin):
+            raise ValueError("Old pin is incorrect.")
+
+        user.transactionPin = new_pin
+        user.save()
+
+        return user

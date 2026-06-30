@@ -113,3 +113,29 @@ class RegisterSerializer(serializers.Serializer):
             raise ValueError("Phone number already exists")
 
         return value
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "Passwords do not match."}
+            )
+
+        return attrs
+    
+class ChangePinSerializer(serializers.Serializer):
+    old_pin = serializers.CharField()
+    new_pin = serializers.CharField()
+    confirm_pin = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["new_pin"] != attrs["confirm_pin"]:
+            raise serializers.ValidationError(
+                {"confirm_pin": "Pins do not match."}
+            )
+
+        return attrs

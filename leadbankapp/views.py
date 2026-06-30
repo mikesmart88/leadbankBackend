@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework import status
 import json
-from .serializers import LoginSerializer, UserInfoSerializer, UserUpdateSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer, RegisterSerializer
+from .serializers import LoginSerializer, UserInfoSerializer, ChangePinSerializer, ChangePasswordSerializer, UserUpdateSerializer, TransactionSerializer, CardSerializer, CardTransactionSerializer, VerificationSerializer, CreateAccountSerializer, FundsSerializer, RegisterSerializer
 from . import models
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
@@ -483,6 +483,58 @@ class UpdateUserViews(APIView):
                 {"message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
                 )
+        
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                UserServices.change_password(
+                    request.user,
+                    serializer.validated_data
+                )
+
+                return Response(
+                    {"success": "Password changed successfully."},
+                    status=status.HTTP_200_OK,
+                )
+
+            except Exception as e:
+                return Response(
+                    {"message": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    def patch(self, request):
+        serializer = ChangePinSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                UserServices.change_pin(
+                    request.user,
+                    serializer.validated_data
+                )
+
+                return Response(
+                    {"success": "Pin changed successfully."},
+                    status=status.HTTP_200_OK,
+                )
+
+            except Exception as e:
+                return Response(
+                    {"message": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
         
 
 class WithdrawView(APIView):
